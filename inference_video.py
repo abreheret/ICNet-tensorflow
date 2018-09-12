@@ -55,7 +55,7 @@ H_RES = 1024 # height resolution
 C_RES = 3    # channel resolution
 def main():
     num_classes = cityscapes_class
-    MODEL = 'train'
+    MODEL = 'trainval'
     root_dir = "D:/ANNOTATION/CityScape/leftImg8bit/demoVideo/stuttgart_00"
     images = os.listdir(root_dir)
 
