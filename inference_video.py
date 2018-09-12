@@ -4,6 +4,7 @@ import os
 import cv2
 import tensorflow as tf
 import numpy as np
+import pl_tbx_python as tbx
 
 from model import ICNet, ICNet_BN
 from tools import decode_labels
@@ -49,15 +50,23 @@ def check_input(img):
         shape = [ori_h, ori_w]
 
     return img, shape
+    
+# W_RES = 2048 # width resolution
+# H_RES = 1024 # height resolution
+# C_RES = 3    # channel resolution
 
-W_RES = 2048 # width resolution
-H_RES = 1024 # height resolution
-C_RES = 3    # channel resolution
 def main():
     num_classes = cityscapes_class
-    MODEL = 'train'
-    root_dir = "D:/ANNOTATION/CityScape/leftImg8bit/demoVideo/stuttgart_00"
-    images = os.listdir(root_dir)
+    MODEL = 'trainval'
+    #root_dir = "D:/ANNOTATION/CityScape/leftImg8bit/demoVideo/stuttgart_00"
+    #images = os.listdir(root_dir)
+    #movie = tbx.Movie("D:/SEQUENCES/Cocoon/REC-ChangAn/20171027_113338_ChangAn_1/ChangAn_1_20171027_113338_TJC__CocoonReceiver_2_Right.jsq")
+    movie = tbx.Movie(#"D:/SEQUENCES/Cocoon/TJC/TJC_DEMO5/20161216_102216_Wave3_TJC_DEMO5_Client/Wave3_TJC_DEMO5_20161216_102216_TJC__ExpertViewerReceiver_FrontCam.jsq"
+    "D:/SEQUENCES/Cocoon/TJC/TJC_DEMO5/20161216_102216_Wave3_TJC_DEMO5_Client/Wave3_TJC_DEMO5_20161216_102216_TJC__CocoonReceiver_2_Right.jsq"
+    )
+    W_RES = movie.width()
+    H_RES = movie.height()
+    C_RES = movie.channels()
 
     # shape = img.shape[0:2]
     # x = tf.placeholder(dtype=tf.float32, shape=img.shape)
@@ -96,14 +105,16 @@ def main():
 
     i = 0
     speed = 1
-    while i < len(images):
+    
+    while i < movie.nbFrame():
         #img_read = misc.imread(root_dir + '/' + images[i], mode='RGB')
-        img_read = cv2.imread(root_dir + '/' + images[i])
-        img_read = cv2.resize(img_read,(W_RES,H_RES))
+        #img_read = cv2.imread(root_dir + '/' + images[i])
+        #img_read = cv2.resize(img_read,(W_RES,H_RES))
+        img_read = movie.getImage(i)
         preds = sess.run(pred, feed_dict={x: img_read})
         input = cv2.cvtColor(img_read, cv2.COLOR_BGR2RGB)
         out = cv2.cvtColor(cv2.convertScaleAbs(preds[0]), cv2.COLOR_BGR2RGB)
-        out = cv2.addWeighted(input, 0.1, out, 0.9, 0.0)
+        out = cv2.addWeighted(input, 0.5, out, 0.5, 0.0)
         cv2.imshow("out", out)
         key = cv2.waitKey(5)
         if key == 27:
