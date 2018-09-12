@@ -103,7 +103,7 @@ def main():
         preds = sess.run(pred, feed_dict={x: img_read})
         input = cv2.cvtColor(img_read, cv2.COLOR_BGR2RGB)
         out = cv2.cvtColor(cv2.convertScaleAbs(preds[0]), cv2.COLOR_BGR2RGB)
-        out = cv2.addWeighted(input, 0.1, out, 0.9, 0.0)
+        out = cv2.addWeighted(input, 0.3, out, 0.7, 0.0)
         cv2.imshow("out", out)
         key = cv2.waitKey(5)
         if key == 27:
