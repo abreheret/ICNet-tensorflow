@@ -1,0 +1,94 @@
+project(tfcpp)
+cmake_minimum_required(VERSION 2.8)
+
+# set( ROOT_TF "D:\tensorflow\include")
+set( VC_CONFIGURATION Release)
+
+find_package(CUDA "9.0" REQUIRED)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=/"sm_30,compute_30/";-gencode arch=compute_35,code=/"sm_35,compute_35/";-gencode arch=compute_52,code=/"sm_52,compute_52/")
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};--include-path ${PROJECT_BINARY_DIR}/${VC_CONFIGURATION};--expt-relaxed-constexpr)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-ftz=true)  # Flush denormals to zero
+set(CUDA_INCLUDE 
+	${CUDA_TOOLKIT_TARGET_DIR} 
+	${CUDA_TOOLKIT_TARGET_DIR}/extras/CUPTI/include 
+	${CUDA_TOOLKIT_TARGET_DIR}/include)
+# add_definitions(-D__VERSION__=/"MSVC/" -DWIN32)
+# Suppress warnings to reduce build log size.
+add_definitions(/wd4267 /wd4244 /wd4800 /wd4503 /wd4554 /wd4996 /wd4348 /wd4018)
+add_definitions(/wd4099 /wd4146 /wd4267 /wd4305 /wd4307)
+add_definitions(/wd4715 /wd4722 /wd4723 /wd4838 /wd4309 /wd4334 /wd4003 /wd4506)
+add_definitions(-DOS_WIN -D_MBCS -DWIN64 -DPLATFORM_WINDOWS -D_ITERATOR_DEBUG_LEVEL=0)
+add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2 -DEIGEN_AVOID_STL_ARRAY -DNOMINMAX -DTENSORFLOW_USE_EIGEN_THREADPOOL -DEIGEN_HAS_C99_MATH -DTF_COMPILE_LIBRARY -DTF_USE_SNAPPY -D_WIN32_WINNT=0x0A00 -DLANG_CXX11 -DCOMPILER_MSVC -D_MBCS)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GF /arch:AVX2 /MP")
+set(TF_INCLUDE_ROOT "D:/tensorflow/include")
+include_directories(
+    ${TF_INCLUDE_ROOT}
+	${TF_INCLUDE_ROOT}/build
+	# ${TF_INCLUDE_ROOT}/tensorflow/contrib/cmake/build
+	${TF_INCLUDE_ROOT}/external/zlib_archive
+	${TF_INCLUDE_ROOT}/external/gif_archive/giflib-5.1.4
+	${TF_INCLUDE_ROOT}/external/png_archive
+	${TF_INCLUDE_ROOT}/external/jpeg_archive
+	${TF_INCLUDE_ROOT}/external/lmdb
+	${TF_INCLUDE_ROOT}/external/eigen_archive
+	${TF_INCLUDE_ROOT}/external/farmhash_archive
+	${TF_INCLUDE_ROOT}/external/farmhash_archive/util
+	${TF_INCLUDE_ROOT}/external/highwayhash
+	${TF_INCLUDE_ROOT}/external/sqlite
+	${TF_INCLUDE_ROOT}/external/nsync/public
+	${TF_INCLUDE_ROOT}/external/protobuf
+	${TF_INCLUDE_ROOT}/third_party/eigen3
+	${TF_INCLUDE_ROOT}/third_party/gpus
+	${CUDA_INCLUDE}
+	# ${ROOT_TF}/tensorflow/contrib/cmake/build/re2/install/include
+	# ${ROOT_TF}/tensorflow/contrib/cmake/build/grpc/src/grpc/include
+	# ${ROOT_TF}/tensorflow/contrib/cmake/build/gemmlowp/src/gemmlowp
+	# ${ROOT_TF}/tensorflow/contrib/cmake/build/jsoncpp/src/jsoncpp
+	# ${ROOT_TF}/tensorflow/contrib/cmake/build/cub/src/cub
+	# ${ROOT_TF}/tensorflow/contrib/cmake/build/snappy/src/snappy
+)
+
+set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_CUFFT_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cupti_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cudnn.lib)
+
+set( TF_LIBS_DEP 
+	farmhash.lib
+	fft2d.lib
+	giflib.lib
+	libprotobuf.lib
+	zlibstatic.lib
+	libjpeg.lib
+	lmdb.lib
+	nsync.lib
+	libpng12_static.lib
+	tf_core_gpu_kernels.lib
+	snappy.lib
+	sqlite.lib
+	tf_cc_while_loop.lib
+	tf_core_framework.lib
+	tf_cc_framework.lib
+	tf_cc_ops.lib
+	tf_core_lib.lib
+	tf_protos_cc.lib
+	tf_core_ops.lib
+	tf_stream_executor.lib
+	tf_core_kernels.lib       
+	tf_core_cpu.lib           
+	tf_core_direct_session.lib
+)
+
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}
+	/WHOLEARCHIVE:tf_core_ops.lib
+	/WHOLEARCHIVE:tf_stream_executor.lib
+	/WHOLEARCHIVE:tf_core_kernels.lib                    
+	/WHOLEARCHIVE:tf_core_cpu.lib              
+	/WHOLEARCHIVE:tf_core_direct_session.lib
+")
+
+link_directories( D:/tensorflow/libs )
+
+add_executable(tfcpp main.cpp)
+target_link_libraries(tfcpp PUBLIC ${CUDA_LIBRARIES} ${TF_LIBS_DEP})
+
+add_executable(app2 app2.cpp)
+target_link_libraries(app2 PUBLIC ${CUDA_LIBRARIES} ${TF_LIBS_DEP})
