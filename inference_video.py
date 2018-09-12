@@ -112,7 +112,7 @@ def main():
         #img_read = cv2.resize(img_read,(W_RES,H_RES))
         img_read = movie.getImage(i)
         preds = sess.run(pred, feed_dict={x: img_read})
-        input = cv2.cvtColor(img_read, cv2.COLOR_BGR2RGB)
+        input = img_read #cv2.cvtColor(img_read, cv2.COLOR_BGR2RGB)
         out = cv2.cvtColor(cv2.convertScaleAbs(preds[0]), cv2.COLOR_BGR2RGB)
         out = cv2.addWeighted(input, 0.5, out, 0.5, 0.0)
         cv2.imshow("out", out)
