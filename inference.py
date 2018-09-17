@@ -2,9 +2,10 @@ from __future__ import print_function
 
 import argparse
 import os
+import glob
 import sys
-import time
-from PIL import Image
+import timeit
+from tqdm import trange
 import tensorflow as tf
 import numpy as np
 from scipy import misc
@@ -26,15 +27,13 @@ model_paths = {'train': './model/icnet_cityscapes_train_30k.npy',
 # mapping different model
 model_config = {'train': ICNet, 'trainval': ICNet, 'train_bn': ICNet_BN, 'trainval_bn': ICNet_BN, 'others': ICNet_BN}
 
-
 snapshot_dir = './snapshots'
-
 SAVE_DIR = './output/'
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Reproduced PSPNet")
     parser.add_argument("--img-path", type=str, default='',
-                        help="Path to the RGB image file.",
+                        help="Path to the RGB image file or input directory.",
                         required=True)
     parser.add_argument("--model", type=str, default='',
                         help="Model to use.",
@@ -114,8 +113,24 @@ def main():
     else:
         num_classes = ADE20k_class
 
-    img, filename = load_img(args.img_path)
-    shape = img.shape[0:2]
+    # Read images from directory (size must be the same) or single input file
+    imgs = []
+    filenames = []
+    if os.path.isdir(args.img_path):
+        file_paths = glob.glob(os.path.join(args.img_path, '*'))
+        for file_path in file_paths:
+            ext = file_path.split('.')[-1].lower()
+
+            if ext == 'png' or ext == 'jpg':
+                img, filename = load_img(file_path)
+                imgs.append(img)
+                filenames.append(filename)
+    else:
+        img, filename = load_img(args.img_path)
+        imgs.append(img)
+        filenames.append(filename)
+
+    shape = imgs[0].shape[0:2]
 
     x = tf.placeholder(dtype=tf.float32, shape=img.shape)
     img_tf = preprocess(x)
@@ -154,12 +169,17 @@ def main():
     else:
         net.load(model_path, sess)
         print('Restore from {}'.format(model_path))
-        
-    preds = sess.run(pred, feed_dict={x: img})
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    misc.imsave(args.save_dir + filename, preds[0])
+
+    for i in trange(len(imgs), desc='Inference', leave=True):
+        start_time = timeit.default_timer() 
+        preds = sess.run(pred, feed_dict={x: imgs[i]})
+        elapsed = timeit.default_timer() - start_time
+
+        print('inference time: {}'.format(elapsed))
+        misc.imsave(args.save_dir + filenames[i], preds[0])
 
 if __name__ == '__main__':
     main()
