@@ -8,6 +8,7 @@ import pl_tbx_python as tbx
 
 from model import ICNet, ICNet_BN
 from tools import decode_labels
+import time
 
 IMG_MEAN = np.array((103.939, 116.779, 123.68), dtype=np.float32)
 # define setting & model configuration
@@ -61,11 +62,11 @@ def main():
     #root_dir = "D:/ANNOTATION/CityScape/leftImg8bit/demoVideo/stuttgart_00"
     #images = os.listdir(root_dir)
     #movie = tbx.Movie("D:/SEQUENCES/Cocoon/REC-ChangAn/20171027_113338_ChangAn_1/ChangAn_1_20171027_113338_TJC__CocoonReceiver_2_Right.jsq")
-    movie = tbx.Movie(#"D:/SEQUENCES/Cocoon/TJC/TJC_DEMO5/20161216_102216_Wave3_TJC_DEMO5_Client/Wave3_TJC_DEMO5_20161216_102216_TJC__ExpertViewerReceiver_FrontCam.jsq"
-    "D:/SEQUENCES/Cocoon/TJC/TJC_DEMO5/20161216_102216_Wave3_TJC_DEMO5_Client/Wave3_TJC_DEMO5_20161216_102216_TJC__CocoonReceiver_2_Right.jsq"
+    movie = tbx.Movie("D:/SEQUENCES/Cocoon/TJC/TJC_DEMO5/20161216_102216_Wave3_TJC_DEMO5_Client/Wave3_TJC_DEMO5_20161216_102216_TJC__ExpertViewerReceiver_FrontCam.jsq"
+    #"D:/SEQUENCES/Cocoon/TJC/TJC_DEMO5/20161216_102216_Wave3_TJC_DEMO5_Client/Wave3_TJC_DEMO5_20161216_102216_TJC__CocoonReceiver_2_Right.jsq"
     )
-    W_RES = movie.width()
-    H_RES = movie.height()
+    W_RES = movie.width()//2
+    H_RES = movie.height()//2
     C_RES = movie.channels()
 
     # shape = img.shape[0:2]
@@ -105,24 +106,27 @@ def main():
 
     i = 0
     speed = 1
-    
+    size = (W_RES,H_RES)
+    ov = tbx.Overlay(size)
     while i < movie.nbFrame():
-        #img_read = misc.imread(root_dir + '/' + images[i], mode='RGB')
-        #img_read = cv2.imread(root_dir + '/' + images[i])
-        #img_read = cv2.resize(img_read,(W_RES,H_RES))
         img_read = movie.getImage(i)
+        img_read = cv2.resize(img_read,(W_RES,H_RES))
+        
+        start = time.time()
         preds = sess.run(pred, feed_dict={x: img_read})
+        end = time.time()
         input = img_read #cv2.cvtColor(img_read, cv2.COLOR_BGR2RGB)
         out = cv2.cvtColor(cv2.convertScaleAbs(preds[0]), cv2.COLOR_BGR2RGB)
         out = cv2.addWeighted(input, 0.5, out, 0.5, 0.0)
-        cv2.imshow("out", out)
-        key = cv2.waitKey(5)
+        ov.setImage(out)
+        ov.printText(position=(3,30),txt="time {:.4f} ms".format(1000*(end - start)))
+        cv2.imshow("out", ov.getImage4Show())
+        key = cv2.waitKey(2)
         if key == 27:
             break
         elif key == 56:
             i += 100
         i+=speed
-        print("frame= %d key=%d" % (i,key))
 
 
 if __name__ == '__main__':
